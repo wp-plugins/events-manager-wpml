@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name: Events Manager and WPML Compatability
+Plugin Name: Events Manager and WPML Compatibility
 Version: 0.1
 Plugin URI: http://wp-events-plugin.com
 Description: Integrates the Events Manager and WPML plugins together to provide a smoother multilingual experience (EM and WPML also needed)

@@ -1,4 +1,4 @@
-=== Events Manager and WPML Compatability ===
+=== Events Manager and WPML Compatibility ===
 Contributors: netweblogic
 Donate link: http://wp-events-plugin.com
 Tags: events, multilingual, wpml, event, event registration, event calendar, events calendar, event management
