@@ -1,6 +1,6 @@
 <?php
 class EM_WPML_Admin{
-	function init(){
+	public static function init(){
 	    if( !class_exists('SitePress') || !defined('EM_VERSION') ) return; //only continue of both EM and WPML are activated
 		global $pagenow;
 		add_filter('em_event_save_meta_pre','EM_WPML_Admin::event_save_meta_pre',10,2);
@@ -8,7 +8,7 @@ class EM_WPML_Admin{
 		add_action('add_meta_boxes', 'EM_WPML_Admin::meta_boxes',100);
 	}
 	
-	function meta_boxes(){
+	public static function meta_boxes(){
 	    global $EM_Event, $sitepress;
 	    //decide if it's a master event, if not then hide the meta boxes
 	    if( !EM_WPML::is_master_event($EM_Event) ){
@@ -20,7 +20,7 @@ class EM_WPML_Admin{
 	    }
 	}
 	
-	function event_meta_box(){
+	public static function event_meta_box(){
 	    global $EM_Event;
 	    ?>
 	    <input type="hidden" name="_emnonce" value="<?php echo wp_create_nonce('edit_event'); ?>" />
@@ -43,7 +43,7 @@ class EM_WPML_Admin{
 	 * @param boolean $result
 	 * @param EM_Location $EM_Location
 	 */
-	function location_save_pre($EM_Location){
+	public static function location_save_pre($EM_Location){
 		global $wpdb;
 	}
 
@@ -52,7 +52,7 @@ class EM_WPML_Admin{
 	 * @param boolean $result
 	 * @param EM_Event $EM_Event
 	 */
-	function event_save_meta_pre($EM_Event){
+	public static function event_save_meta_pre($EM_Event){
 		global $wpdb, $post;
 		if( $EM_Event->post_id != $post->ID ){
 			//different language, make sure we don't have the same event_id as the original language

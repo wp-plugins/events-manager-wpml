@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Events Manager and WPML Compatibility
-Version: 0.1
+Version: 0.2
 Plugin URI: http://wp-events-plugin.com
 Description: Integrates the Events Manager and WPML plugins together to provide a smoother multilingual experience (EM and WPML also needed)
 Author: Marcus Sykes
@@ -75,7 +75,7 @@ $em_wpml_master_event_ids_cache = array();
 $em_wpml_master_events_cache = array();
 
 class EM_WPML{
-    static function init(){
+    public static function init(){
 	    if( !class_exists('SitePress') || !defined('EM_VERSION') ) return; //only continue of both EM and WPML are activated
 		self::init_pages();
 		self::init_saves();
@@ -103,7 +103,7 @@ class EM_WPML{
 		add_filter('em_wp_localize_script', 'EM_WPML::em_wp_localize_script');
     }
     
-    static function em_wp_localize_script($em_localized_js){
+    public static function em_wp_localize_script($em_localized_js){
         $em_localized_js['ajaxurl'] = admin_url('admin-ajax.php?lang='.ICL_LANGUAGE_CODE);
         $em_localized_js['locationajaxurl'] = admin_url('admin-ajax.php?action=locations_search&lang='.ICL_LANGUAGE_CODE);
         return $em_localized_js;
@@ -115,7 +115,7 @@ class EM_WPML{
      * Requires that you make SitePress::$wp_query a public property
      * @param unknown_type $langs
      */
-    static function icl_ls_languages($langs){
+    public static function icl_ls_languages($langs){
         global $wpdb, $sitepress, $wp_query;
         //TODO ask wpml to add $template_args to the icl_ls_languages filter
         //TODO ask wpml to make SitePress::$wp_query visible, otherwise this can't happen
@@ -146,7 +146,7 @@ class EM_WPML{
     /**
      * Notifies user of the fact that recurrences are disabled by default with this plugin activated 
      */
-    static function disable_recurrence_notice(){
+    public static function disable_recurrence_notice(){
 		?>
 		<div id="message" class="updated">
 			<p><?php echo sprintf(__('Since you are using WPML, we have automatically disabled recurring events, your recurrences already created will act as normal single events. This is because recurrences are not compatible with WPML at the moment. If you really still want recurrences enabled, then you should add %s to your wp-config.php file. <a href="%s">Dismiss</a>','em-wpml'),'<code>define(\'EM_WMPL_FORCE_RECURRENCES\',true);</code>', add_query_arg(array('em_wpml_disable_recurrence_notice'=>1))); ?></p>
@@ -158,7 +158,7 @@ class EM_WPML{
 	 * PAGES
 	 * Pages overriden in EM won't be overriden if viewing their translated versions, these functions fix the problem
 	 */    
-    static function init_pages(){
+    public static function init_pages(){
         add_filter('option_dbem_events_page','EM_WPML::get_translated_page');
         add_filter('option_dbem_locations_page','EM_WPML::get_translated_page');
         add_filter('option_dbem_categories_page','EM_WPML::get_translated_page');
@@ -169,13 +169,25 @@ class EM_WPML{
     }
     
     /**
-     * There's probably a WPML function somewhere that does this, but this returns the post id of the supplied post_id, otherwise returns false.
+     * There's probably a WPML function somewhere that does this, but this returns the tranlated post id in current language of the supplied post_id, otherwise returns false.
      * @param int $post_id
      */
-    static function get_translation_source($post_id){
+    public static function get_translation_source($post_id){
     	global $wpdb, $sitepress, $em_wpml_tranlsation_index;
     	if( !empty($em_wpml_tranlsation_index[$sitepress->get_current_language()][$post_id]) ) return $em_wpml_tranlsation_index[$sitepress->get_current_language()][$post_id];
-    	$translated_id = $wpdb->get_var("SELECT element_id FROM {$wpdb->prefix}icl_translations WHERE trid=$post_id AND language_code='{$sitepress->get_current_language()}'");
+    	//find translation of current post if exists
+    	$trid = $sitepress->get_element_trid($post_id, 'post_page');
+    	$translations = $sitepress->get_element_translations($trid, 'post_page');
+    	if( count($translations) > 0 ){
+    		$current_lang = $sitepress->get_current_language();
+    		foreach( $translations as $translation ){
+    			if( $translation->language_code == $current_lang ){
+    			    $translated_id = $translation->element_id;
+    			    break;
+    			}
+    		}
+    	}
+    	//$translated_id = $wpdb->get_var("SELECT trid FROM {$wpdb->prefix}icl_translations WHERE element_id=$post_id AND language_code='{$sitepress->get_current_language()}'");
     	if( !empty($translated_id) ){
     		$em_wpml_tranlsation_index[$sitepress->get_current_language()][$post_id] = $translated_id;
     		return $translated_id;
@@ -188,7 +200,7 @@ class EM_WPML{
      * @param int $post_id
      * @return int
      */
-    static function get_translated_page($post_id){
+    public static function get_translated_page($post_id){
     	global $sitepress;
     	if( $sitepress->get_current_language() != $sitepress->get_default_language() ){
     		$translated_id = self::get_translation_source($post_id);
@@ -204,7 +216,7 @@ class EM_WPML{
      * SAVE/EDIT FUNCTIONS
      * When an event or location is saved, we need to perform certain options depending whether saved on the front-end editor, or if saved/translated in the backend using WPML, since events share information across translations.
     */
-    static function init_saves(){
+    public static function init_saves(){
         add_filter('em_location_save','EM_WPML::location_save',10,2);
         add_filter('em_event_get_post','EM_WPML::event_get_post',10,2);
         add_filter('em_event_save','EM_WPML::event_save',10,2);
@@ -217,7 +229,7 @@ class EM_WPML{
      * @param EM_Location $EM_Location
      * @return boolean
     */
-    static function location_save($result, $EM_Location){
+    public static function location_save($result, $EM_Location){
     	global $wpdb;
     	if( !$wpdb->get_var("SELECT translation_id FROM {$wpdb->prefix}icl_translations WHERE element_id={$EM_Location->post_id}") ){
     		//save a value into WPML table
@@ -232,7 +244,7 @@ class EM_WPML{
      * @param EM_Event $EM_Event
      * @return boolean
      */
-    static function event_get_post($result, $EM_Event){
+    public static function event_get_post($result, $EM_Event){
         //check if this is a master event, if not then we need to get the relevant master event info and populate this object with it so it passes validation and saves correctly.
         $master_event_info = self::get_master_event_info($EM_Event->post_id, 'post_id');
         if( empty($master_event_info) && is_admin() && !empty($_REQUEST['icl_trid']) ){
@@ -278,7 +290,7 @@ class EM_WPML{
      * @param EM_Event $EM_Event
      * @return boolean
      */
-    static function event_save($result, $EM_Event){
+    public static function event_save($result, $EM_Event){
 		global $wpdb, $sitepress;
 		if( !empty($EM_Event->post_id) && !empty($EM_Event->event_id) ){ //save this if a post id is saved, regarldess of whether the event is valid for publication
 			//firstly, save a translation record if needed, e.g. via the front-end
@@ -331,7 +343,7 @@ class EM_WPML{
      * @param EM_Event $EM_Event
      * @return boolean
      */
-    static function event_duplicate($result, $EM_Event){
+    public static function event_duplicate($result, $EM_Event){
     	global $wpdb;
     	if( $result && !$wpdb->get_var("SELECT translation_id FROM {$wpdb->prefix}icl_translations WHERE element_id={$EM_Event->post_id}") ){
     		//save a value into WPML table
@@ -344,7 +356,7 @@ class EM_WPML{
 	* MODIFYING EVENT/LOCATION LIST SEARCHES
 	*/
     
-    static function init_searches(){
+    public static function init_searches(){
         add_filter('em_event','EM_WPML::event_load');
         add_filter('em_events_build_sql_conditions','EM_WPML::event_searches',10,2);
         add_filter('em_locations_build_sql_conditions','EM_WPML::location_searches',10,2);
@@ -356,7 +368,7 @@ class EM_WPML{
      * Specifically, modifies the location id to the currently translated location if applicable.
      * @param EM_Event $EM_Event
      */
-    static function event_load( $EM_Event ){
+    public static function event_load( $EM_Event ){
         if( $EM_Event->location_id ){
             $translated_post_id = self::get_translated_location_post_id($EM_Event->location_id);
             if( $translated_post_id && $EM_Event->get_location()->post_id != $translated_post_id ){
@@ -372,7 +384,7 @@ class EM_WPML{
 	 * @param array $args
 	 * @return string
 	 */
-	static function event_searches($conditions, $args){
+	public static function event_searches($conditions, $args){
 		global $wpdb;
 		if( defined('ICL_LANGUAGE_CODE') ){
 			$conditions['wpml'] = EM_EVENTS_TABLE.'.post_id IN (SELECT element_id FROM '.$wpdb->prefix."icl_translations WHERE language_code ='".ICL_LANGUAGE_CODE."' AND element_type='post_".EM_POST_TYPE_EVENT."')";
@@ -387,7 +399,7 @@ class EM_WPML{
 	 * @param array $args
 	 * @return string
 	 */
-	static function location_searches($conditions, $args){
+	public static function location_searches($conditions, $args){
 		global $wpdb;
 		if( defined('ICL_LANGUAGE_CODE') ){
 			$conditions['wpml'] = EM_LOCATIONS_TABLE.'.post_id IN (SELECT element_id FROM '.$wpdb->prefix."icl_translations WHERE language_code ='".ICL_LANGUAGE_CODE."' AND element_type='post_".EM_POST_TYPE_LOCATION."')";
@@ -400,7 +412,7 @@ class EM_WPML{
 	 * @param unknown_type $location_conds
 	 * @return string
 	 */
-	static function location_searches_autocompleter($location_conds){
+	public static function location_searches_autocompleter($location_conds){
 		global $wpdb;
 		if( defined('ICL_LANGUAGE_CODE') ){
 			$location_conds .= " AND ".EM_LOCATIONS_TABLE.'.post_id IN (SELECT element_id FROM '.$wpdb->prefix."icl_translations WHERE language_code ='".ICL_LANGUAGE_CODE."' AND element_type='post_".EM_POST_TYPE_LOCATION."')";
@@ -420,7 +432,7 @@ class EM_WPML{
 	 * RECURRING EVENTS
 	* WARNING - Given that recurrences create seperate individual events from a different post type, it's pretty much impossible as is to reliably target a translation since WPML requires a new recurring event post to be created. For that reason it's advised you disable recurring events.
 	*/
-	static function init_recurring(){
+	public static function init_recurring(){
 	    add_filter('em_event_save_events','EM_WPML::em_event_save_events',10,4);
 	    add_filter('delete_events','EM_WPML::delete_events', 10,3);
 	}
@@ -434,7 +446,7 @@ class EM_WPML{
 	 * @param unknown_type $post_ids
 	 * @return unknown
 	 */
-	static function em_event_save_events($result, $EM_Event, $event_ids, $post_ids){
+	public static function em_event_save_events($result, $EM_Event, $event_ids, $post_ids){
 		global $wpdb;
 		if($result){
 			$inserts = array();
@@ -455,7 +467,7 @@ class EM_WPML{
 		return $result;
 	}
 	
-	static function delete_events($result, $EM_Event, $events){
+	public static function delete_events($result, $EM_Event, $events){
 		global $wpdb;
 		if($result){
 			$post_ids = array();
@@ -473,13 +485,13 @@ class EM_WPML{
 	/*
 	 * EVENT time/booking data management
 	 */
-	static function init_master_events(){
+	public static function init_master_events(){
 		add_filter('em_event_output_placeholder','EM_WPML::override_placeholders',100,3); //override bookign form
 		add_filter('em_event_get_bookings','EM_WPML::override_bookings',100,2);
 		add_action('em_event_delete_meta_event_pre', 'EM_WPML::check_event_deletions', 10, 1);
 	}
 	
-	static function check_event_deletions($EM_Event){
+	public static function check_event_deletions($EM_Event){
 		global $wpdb, $sitepress;
 		if( self::is_master_event($EM_Event) ){
 			//check to see if there's any translations of this event
@@ -510,7 +522,7 @@ class EM_WPML{
 		$wpdb->delete($wpdb->prefix.'em_wpml_events', array('event_id'=>$EM_Event->event_id));
 	}
 	
-	static function override_bookings($EM_Bookings, $EM_Event){
+	public static function override_bookings($EM_Bookings, $EM_Event){
 		if( $EM_Bookings->event_id == $EM_Event->event_id ){ //no point doing extra work if event ids are different, since it means this was already done
 			$master_event_id = self::get_master_event_id($EM_Event->event_id);
 			if( $EM_Bookings->event_id != $EM_Event->event_id ){
@@ -528,7 +540,7 @@ class EM_WPML{
 	 * @param string $full_result
 	 * @return string
 	 */
-	static function override_placeholders($replace, $EM_Event, $full_result){
+	public static function override_placeholders($replace, $EM_Event, $full_result){
 		global $em_wpml_master_events_cache;
 		if( in_array($full_result, array('#_BOOKINGFORM','#_BOOKINGFORMBUTTON', '#_ATTENDEES','#_ATTENDEESLIST','#_ATTENDEESPENDINGLIST','#_EVENTPRICEMIN','#_EVENTPRICEMAX','#_AVAILABLESPACES','#_BOOKEDSPACES','#_PENDINGSPACES','#_SPACES','#_EVENTPRICERANGE')) ){
 			$master_event_info = self::get_master_event_info($EM_Event->ID,'post_id'); //get the master event info, for later use
@@ -553,7 +565,7 @@ class EM_WPML{
 	 * @param string $type
 	 * @return int|false
 	 */
-	static function get_master_event_id($id, $type="event_id"){
+	public static function get_master_event_id($id, $type="event_id"){
 		global $wpdb, $em_wpml_master_event_ids_cache;
 		$type = ($type == 'post_id') ? $type:'event_id';
 		if( isset($em_wpml_master_event_ids_cache[$type][$id]) ) return $em_wpml_master_event_ids_cache[$type][$id]; //retrieve cached version
@@ -575,7 +587,7 @@ class EM_WPML{
 	 * @param string $type
 	 * @return array|boolean
 	 */
-	static function get_master_event_info($id, $type = 'event_id'){
+	public static function get_master_event_info($id, $type = 'event_id'){
 		global $wpdb;
 		$type = ($type == 'post_id') ? $type:'event_id';
 		$sql = $wpdb->prepare("SELECT post_id, event_id FROM {$wpdb->prefix}em_wpml_events WHERE event_id=(SELECT master_event_id FROM {$wpdb->prefix}em_wpml_events WHERE $type=%d)", $id);
@@ -592,7 +604,7 @@ class EM_WPML{
 	 * @param string $type
 	 * @return int
 	 */
-	static function get_translated_location_post_id($id, $type = 'location_id'){
+	public static function get_translated_location_post_id($id, $type = 'location_id'){
 		global $wpdb, $sitepress;
 		$type = ($type == 'post_id') ? $type:'location_id';
 		$post_id = false;
@@ -618,7 +630,7 @@ class EM_WPML{
 	 * @param int $trid
 	 * @return int
 	 */
-	static function get_trid_original_post_id($trid){
+	public static function get_trid_original_post_id($trid){
 		global $sitepress;
 		$original_post_id = false;
 		$translations = $sitepress->get_element_translations($trid, 'post_'.EM_POST_TYPE_EVENT);
@@ -642,7 +654,7 @@ class EM_WPML{
 	 * @param EM_Event $EM_Event
 	 * @return boolean
 	 */
-	static function is_master_event( $EM_Event ){
+	public static function is_master_event( $EM_Event ){
 		global $wpdb;
 		if( !empty($EM_Event->event_id) ){
 			$event_id = self::get_master_event_id($EM_Event->event_id);
@@ -656,12 +668,12 @@ class EM_WPML{
 	/*
 	 * TRANSLATABLE OPTIONS
 	 */
-	static function init_options(){
+	public static function init_options(){
 		add_filter('em_ml_langs','EM_WPML::em_ml_langs');
 		add_filter('em_ml_wplang','EM_WPML::em_ml_wplang');
 	}
 	
-	static function em_ml_langs(){
+	public static function em_ml_langs(){
 		global $sitepress, $wpdb;
 		$sitepress_langs = $sitepress->get_active_languages();
 		$sitpress_full_langs = $wpdb->get_results("SELECT code, default_locale FROM {$wpdb->prefix}icl_languages WHERE code IN ('".implode("','",array_keys($sitepress_langs))."')", ARRAY_A);
@@ -672,7 +684,7 @@ class EM_WPML{
 		return $langs;
 	}
 	
-	static function em_ml_wplang(){
+	public static function em_ml_wplang(){
 		global $sitepress,$wpdb;
 		$sitepress_lang = $sitepress->get_default_language();
 		return $wpdb->get_var("SELECT default_locale FROM {$wpdb->prefix}icl_languages WHERE code='$sitepress_lang'");

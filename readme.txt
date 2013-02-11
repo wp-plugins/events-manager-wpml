@@ -4,14 +4,12 @@ Donate link: http://wp-events-plugin.com
 Tags: events, multilingual, wpml, event, event registration, event calendar, events calendar, event management
 Requires at least: 3.3
 Tested up to: 3.5
-Stable tag: 0.1
+Stable tag: 0.2
 License: GPLv2
 
 Integrates the Events Manager and WPML plugins together to provide a smoother multilingual experience (Requires Events Manager and WPML)
 
 == Description ==
-
-= Warning: This is the first public release, test with caution! =
 
 This plugin helps make [Events Manager](http://wordpress.org/extend/plugins/events-manager/) and [WPML](http://wpml.org) work better together by improving various issues:
 
@@ -59,5 +57,9 @@ This plugin requires WPML and Events Manager to be installed BEFORE installing t
 Events Manager WPML works like any standard Wordpress plugin. [See the Codex for installation instructions](http://codex.wordpress.org/Managing_Plugins#Installing_Plugins).
 
 == Changelog ==
+= 0.2 =
+* fixed PHP warnings due to non-static function declarations
+* fixed unexpected behaviour when checking translated EM assigned pages
+
 = 0.1 =
 * first release
