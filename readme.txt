@@ -3,7 +3,7 @@ Contributors: netweblogic
 Donate link: http://wp-events-plugin.com
 Tags: events, multilingual, wpml, event, event registration, event calendar, events calendar, event management
 Requires at least: 3.3
-Tested up to: 3.5
+Tested up to: 3.5.1
 Stable tag: 0.3
 License: GPLv2
 
@@ -21,12 +21,11 @@ This plugin helps make [Events Manager](http://wordpress.org/extend/plugins/even
  * Bookings and Booking Forms
  * If you delete an event that is the originally translated event, booking and other meta info is transferred to default language or next available language translation.
 * Custom texts, emails and formats can now be customized for each language.
- * Requires Events Manager 5.3.2.2 or higher (currently available as a development version)
+ 
+Requires Events Manager 5.3.3 or higher
 
 = Special Installation Steps =
-Please ensure that WPML and EM are installed BEFORE activating this plugin.
-
-For best performance, use EM 5.3.2.2, which is currently a dev version, to automatically update, visit your Events > Settings > General > Admin Tools section in your admin area and click the 'Check Dev-Version' button.
+Please ensure that WPML and EM 5.3.3 or higher are installed BEFORE activating this plugin.
 
 When setting up EM and WPML, you should create translated versions of the event, location, category, tag, etc. pages assigned in Events > Settings > Pages of your admin area. Duplicating them using WPML is enough.
  
@@ -36,7 +35,7 @@ WPML and Events Manager are both complex plugins and there are some inevitable n
 * Event/Location Attributes (solution on the way)
  * Currently these aren't copied over to translations, so you need to recreate custom attributes for each translations.
  * Attributes aren't translatable
-* Recurring events (will be fixed soon after)
+* Recurring events (to be fixed after event/location attributes, no ETA yet)
  * Recurring Events can't be translated when editing the recurrence template, they must be done one by one i.e. at single event level
  * Recurring events are disabled by default due to the above
 * Location Searching
