@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Events Manager and WPML Compatibility
-Version: 0.2
+Version: 0.3
 Plugin URI: http://wp-events-plugin.com
 Description: Integrates the Events Manager and WPML plugins together to provide a smoother multilingual experience (EM and WPML also needed)
 Author: Marcus Sykes
@@ -69,6 +69,8 @@ To close some gaps, extra steps are needed
 
 //TODO what happens if you create a language first in a second languge?
 
+define('EM_WPML_VERSION','0.3');
+
 //stores all master event info within a script run, to save repetitive db calls e.g. within an event format output operation.
 $em_wpml_translation_index = array();
 $em_wpml_master_event_ids_cache = array();
@@ -77,6 +79,13 @@ $em_wpml_master_events_cache = array();
 class EM_WPML{
     public static function init(){
 	    if( !class_exists('SitePress') || !defined('EM_VERSION') ) return; //only continue of both EM and WPML are activated
+	    
+	    //check installation
+	    if( version_compare(EM_WPML_VERSION, get_option('em_wpml_version')) > 0 ){
+	        em_wpml_activate();
+	    }
+	    
+	    //continue initialization
 		self::init_pages();
 		self::init_saves();
 		self::init_searches();
@@ -270,7 +279,6 @@ class EM_WPML{
 				
 			$EM_Event->event_rsvp  = $M_EM_Event->event_rsvp ;
 			$EM_Event->event_rsvp_time  = $M_EM_Event->event_rsvp_time ;
-			$EM_Event->event_attributes  = $M_EM_Event->event_attributes ;
 							
 			$EM_Event->blog_id  = $M_EM_Event->blog_id ;
 			$EM_Event->group_id  = $M_EM_Event->group_id ;
