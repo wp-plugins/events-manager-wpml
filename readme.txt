@@ -3,7 +3,7 @@ Contributors: netweblogic
 Donate link: http://wp-events-plugin.com
 Tags: events, multilingual, wpml, event, event registration, event calendar, events calendar, event management
 Requires at least: 3.3
-Tested up to: 3.5.1
+Tested up to: 3.8
 Stable tag: 0.3
 License: GPLv2
 
@@ -43,6 +43,9 @@ WPML and Events Manager are both complex plugins and there are some inevitable n
 * Taxonomies
  * Taxonomy translation links aren't going to show in the language switcher unless WPML decides to make SitePress::$wp_query a public property
  * Translation switcher options aren't all going to be reflected in taxonomies as $teplate_args isn't passed to filter icl_ls_languages
+* Ticket names aren't translatable, they remain the same across all translations
+* MultiSite
+ * Event Manager's MultiSite Global Tables Mode will not work as expected, listing events and locations from other sites will not return the correct items (if at all). This is due to the architecture of WPML vs. EM when in Global Tables Mode.
 * Custom Booking Forms
  * Pro Booking forms currently aren't translatable, the original ticket names and booking form fields are used.
 * RSS Feeds not translated
