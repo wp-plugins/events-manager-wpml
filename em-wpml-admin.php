@@ -48,9 +48,9 @@ class EM_WPML_Admin {
     }
 	
 	public static function em_ml_admin_original_event_link( $link ){
-	    global $EM_Event, $sitepress;
+	    global $EM_Event;
     	if( empty($EM_Event->event_id) && !empty($_REQUEST['trid']) ){
-			$post_id = $sitepress::get_original_element_id_by_trid($_REQUEST['trid']);
+			$post_id = SitePress::get_original_element_id_by_trid($_REQUEST['trid']);
 			$original_event_link = em_get_event($post_id,'post_id')->get_edit_url();
 		}
 		return $link;
